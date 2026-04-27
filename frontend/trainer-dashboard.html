@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainer Dashboard | GymPro</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .sidebar { border-right-color: rgba(34,197,94,0.2); }
+        .sidebar-brand .brand-icon { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .nav-link:hover { background: rgba(34,197,94,0.08); }
+        .nav-link.active { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .stat-card::before { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .welcome-bar .staff-name strong { color: #4ade80; }
+        .tab-btn.active { color: #22c55e; }
+
+        .tab-bar { display:flex; gap:4px; background:var(--bg-input); border-radius:var(--radius-sm); padding:4px; margin-bottom:20px; }
+        .tab-btn { flex:1; padding:10px 16px; background:transparent; border:none; border-radius:6px; color:var(--text-secondary); font-family:inherit; font-size:0.85rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+        .tab-btn.active { background:var(--bg-card); box-shadow:var(--shadow-sm); }
+
+        .member-select-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; margin-bottom:20px; }
+        .member-chip { background:var(--bg-input); border:2px solid var(--border); border-radius:var(--radius-sm); padding:12px 16px; cursor:pointer; transition:all 0.2s; text-align:center; }
+        .member-chip:hover { border-color:rgba(34,197,94,0.4); }
+        .member-chip.selected { border-color:#22c55e; background:rgba(34,197,94,0.1); }
+        .member-chip .name { font-weight:600; font-size:0.9rem; }
+        .member-chip .sub { font-size:0.72rem; color:var(--text-secondary); margin-top:2px; }
+
+        .workout-card { background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px 20px; margin-bottom:10px; }
+        .workout-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+        .workout-card .day-badge { background:rgba(34,197,94,0.12); color:#4ade80; padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:600; }
+
+        .modal-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; padding:20px; }
+        .modal-overlay.show { display:flex; }
+        .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); width:100%; max-width:560px; max-height:90vh; overflow-y:auto; box-shadow:0 12px 48px rgba(0,0,0,0.5); animation:modalIn 0.3s ease; }
+        @keyframes modalIn { from{opacity:0;transform:translateY(20px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid var(--border); }
+        .modal-header h3 { font-size:1.05rem; font-weight:600; }
+        .modal-close { background:none; border:none; color:var(--text-secondary); font-size:1.3rem; cursor:pointer; }
+        .modal-body { padding:24px; }
+
+        textarea { padding:10px 14px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit; font-size:0.88rem; resize:vertical; width:100%; box-sizing:border-box; transition:border-color var(--transition); }
+        textarea:focus { outline:none; border-color:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,0.1); }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏋️</div>
+            <h2>GymPro<small>Trainer Portal</small></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Main</div>
+            <a href="trainer-dashboard.html" class="nav-link active"><span class="icon">📊</span> Dashboard</a>
+            <div class="nav-section-title">My Members</div>
+            <a href="#" class="nav-link" onclick="switchTab('members'); return false;"><span class="icon">👥</span> View Members</a>
+            <div class="nav-section-title">Assign Plans</div>
+            <a href="#" class="nav-link" onclick="switchTab('diet'); return false;"><span class="icon">🥗</span> Diet Plans</a>
+            <a href="#" class="nav-link" onclick="switchTab('workout'); return false;"><span class="icon">💪</span> Workouts</a>
+            <div class="nav-section-title">Account</div>
+            <a href="#" class="nav-link" onclick="trainerLogout(); return false;"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Trainer Dashboard</h1>
+                <div class="welcome-bar"><span class="staff-name">Welcome, <strong id="trainerNameDisplay">Trainer</strong> — <span id="trainerSpec" style="color:var(--text-secondary);font-size:0.82rem;"></span></span></div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-value" id="myMemberCount">—</div><div class="stat-label">My Members</div></div>
+            <div class="stat-card"><div class="stat-icon blue">🥗</div><div class="stat-value" id="myDietCount">—</div><div class="stat-label">Diet Plans</div></div>
+            <div class="stat-card"><div class="stat-icon orange">💪</div><div class="stat-value" id="myWorkoutCount">—</div><div class="stat-label">Workouts</div></div>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tabMembers" onclick="switchTab('members')">👥 My Members</button>
+            <button class="tab-btn" id="tabDiet" onclick="switchTab('diet')">🥗 Diet Plans</button>
+            <button class="tab-btn" id="tabWorkout" onclick="switchTab('workout')">💪 Workouts</button>
+        </div>
+
+        <!-- Members Section -->
+        <div id="membersSection">
+            <div class="panel"><div class="panel-header"><h2>My Assigned Members</h2></div>
+                <div class="table-wrapper"><table><thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Phone</th><th>Joined</th></tr></thead>
+                <tbody id="membersBody"><tr><td colspan="6" class="empty-state"><p>Loading...</p></td></tr></tbody></table></div>
+            </div>
+        </div>
+
+        <!-- Diet Plans Section -->
+        <div id="dietSection" style="display:none;">
+            <div class="panel"><div class="panel-header"><h2>Diet Plans</h2><button class="btn btn-primary" onclick="openDietModal()">🥗 Assign Diet Plan</button></div>
+                <div class="table-wrapper"><table><thead><tr><th>ID</th><th>Member</th><th>Plan</th><th>Goal</th><th>Date</th><th>Actions</th></tr></thead>
+                <tbody id="dietBody"><tr><td colspan="6" class="empty-state"><p>Loading...</p></td></tr></tbody></table></div>
+            </div>
+        </div>
+
+        <!-- Workouts Section -->
+        <div id="workoutSection" style="display:none;">
+            <div class="panel"><div class="panel-header"><h2>Assigned Workouts</h2><button class="btn btn-primary" onclick="openWorkoutModal()">💪 Assign Workout</button></div>
+                <div id="workoutList"><div class="empty-state"><p>Loading...</p></div></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Diet Plan Modal -->
+    <div class="modal-overlay" id="dietModal">
+        <div class="modal">
+            <div class="modal-header"><h3>🥗 Assign Diet Plan</h3><button class="modal-close" onclick="closeDietModal()">✕</button></div>
+            <div class="modal-body">
+                <form id="dietForm" class="form-grid">
+                    <div class="form-group"><label>Member *</label><select id="dietMember" required><option value="">Select member</option></select></div>
+                    <div class="form-group"><label>Plan Name *</label><input type="text" id="dietPlanName" required placeholder="e.g. Weight Loss Plan"></div>
+                    <div class="form-group"><label>Goal</label>
+                        <select id="dietGoal"><option value="">Select</option><option>Weight Loss</option><option>Muscle Gain</option><option>Maintenance</option><option>Lean Bulk</option><option>General Fitness</option></select>
+                    </div>
+                    <div class="form-group"><label>Date</label><input type="date" id="dietDate"></div>
+                    <div class="form-group full-width"><label>🌅 Breakfast</label><textarea id="dietBreakfast" rows="2" placeholder="e.g. 2 boiled eggs, oats..."></textarea></div>
+                    <div class="form-group full-width"><label>☀️ Lunch</label><textarea id="dietLunch" rows="2" placeholder="e.g. Grilled chicken, rice..."></textarea></div>
+                    <div class="form-group full-width"><label>🌙 Dinner</label><textarea id="dietDinner" rows="2" placeholder="e.g. Paneer tikka, roti..."></textarea></div>
+                    <div class="form-group full-width"><label>🍎 Snacks</label><textarea id="dietSnacks" rows="2" placeholder="e.g. Protein shake, almonds..."></textarea></div>
+                    <div class="form-group full-width"><label>📝 Notes</label><textarea id="dietNotes" rows="2" placeholder="Additional notes..."></textarea></div>
+                    <div class="form-actions"><button type="submit" class="btn btn-primary">💾 Save Diet Plan</button><button type="button" class="btn btn-secondary" onclick="closeDietModal()">Cancel</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workout Modal -->
+    <div class="modal-overlay" id="workoutModal">
+        <div class="modal">
+            <div class="modal-header"><h3>💪 Assign Workout</h3><button class="modal-close" onclick="closeWorkoutModal()">✕</button></div>
+            <div class="modal-body">
+                <form id="workoutForm" class="form-grid">
+                    <div class="form-group"><label>Member *</label><select id="wkMember" required><option value="">Select member</option></select></div>
+                    <div class="form-group"><label>Workout Name *</label><input type="text" id="wkName" required placeholder="e.g. Upper Body Day"></div>
+                    <div class="form-group"><label>Day *</label>
+                        <select id="wkDay" required><option value="">Select day</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select>
+                    </div>
+                    <div class="form-group"><label>Duration (min)</label><input type="number" id="wkDuration" min="1" placeholder="e.g. 60"></div>
+                    <div class="form-group full-width"><label>Exercises</label><textarea id="wkExercises" rows="3" placeholder="e.g. Bench Press, Incline Dumbbell Press, Cable Fly..."></textarea></div>
+                    <div class="form-group full-width"><label>Sets & Reps</label><input type="text" id="wkSetsReps" placeholder="e.g. 4x12, 3x15, 3x10"></div>
+                    <div class="form-group full-width"><label>Notes</label><textarea id="wkNotes" rows="2" placeholder="Rest 60s between sets..."></textarea></div>
+                    <div class="form-actions"><button type="submit" class="btn btn-primary">💾 Save Workout</button><button type="button" class="btn btn-secondary" onclick="closeWorkoutModal()">Cancel</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        function getTrainer() { try { return JSON.parse(localStorage.getItem('gym_trainer')); } catch { return null; } }
+        const trainer = getTrainer();
+        if (!trainer) { window.location.href = 'trainer-login.html'; }
+
+        document.getElementById('trainerNameDisplay').textContent = trainer ? trainer.name : 'Trainer';
+        document.getElementById('trainerSpec').textContent = trainer ? trainer.specialization || '' : '';
+
+        function trainerLogout() { localStorage.removeItem('gym_trainer'); window.location.href = 'trainer-login.html'; }
+
+        function formatDate(d) { if(!d) return '—'; return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+
+        function switchTab(tab) {
+            ['members','diet','workout'].forEach(t => {
+                document.getElementById(t+'Section').style.display = t===tab?'block':'none';
+                document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
+            });
+            if(tab==='members') loadMembers();
+            if(tab==='diet') loadDietPlans();
+            if(tab==='workout') loadWorkouts();
+        }
+
+        async function loadMembers() {
+            try {
+                const res = await fetch(`${API_BASE}/trainers/${trainer.id}/members`);
+                const members = await res.json();
+                document.getElementById('myMemberCount').textContent = members.length;
+                const tbody = document.getElementById('membersBody');
+                if(members.length===0) { tbody.innerHTML='<tr><td colspan="6" class="empty-state"><p>No members assigned to you yet.</p></td></tr>'; return; }
+                tbody.innerHTML = members.map(m=>`<tr><td>${m.Member_ID}</td><td><strong>${m.Name}</strong></td><td>${m.Age||'—'}</td><td>${m.Gender||'—'}</td><td>${m.Phone||'—'}</td><td>${formatDate(m.Join_Date)}</td></tr>`).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadDietPlans() {
+            try {
+                const res = await fetch(`${API_BASE}/diet-plans?trainer_id=${trainer.id}`);
+                const plans = await res.json();
+                document.getElementById('myDietCount').textContent = Array.isArray(plans)?plans.length:0;
+                const tbody = document.getElementById('dietBody');
+                if(!Array.isArray(plans)||plans.length===0) { tbody.innerHTML='<tr><td colspan="6" class="empty-state"><p>No diet plans yet. <a href="#" onclick="openDietModal();return false;">Assign one</a></p></td></tr>'; return; }
+                tbody.innerHTML = plans.map(p=>`<tr><td>${p.Plan_ID}</td><td><strong>${p.Member_Name}</strong></td><td>${p.Plan_Name}</td><td>${p.Goal||'—'}</td><td>${formatDate(p.Created_At)}</td><td><button class="btn btn-sm btn-delete" onclick="deleteDiet(${p.Plan_ID})">🗑️</button></td></tr>`).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadWorkouts() {
+            try {
+                const res = await fetch(`${API_BASE}/workouts?trainer_id=${trainer.id}`);
+                const workouts = await res.json();
+                document.getElementById('myWorkoutCount').textContent = workouts.length;
+                const container = document.getElementById('workoutList');
+                if(workouts.length===0) { container.innerHTML='<div class="empty-state" style="padding:40px;"><div class="icon">💪</div><p>No workouts assigned. <a href="#" onclick="openWorkoutModal();return false;">Create one</a></p></div>'; return; }
+                container.innerHTML = workouts.map(w=>`
+                    <div class="workout-card">
+                        <div class="workout-card-header">
+                            <div><strong>${w.Workout_Name}</strong> <span style="color:var(--text-secondary);font-size:0.82rem;">— ${w.Member_Name}</span></div>
+                            <div style="display:flex;gap:6px;align-items:center;">
+                                <span class="day-badge">${w.Day_Of_Week}</span>
+                                ${w.Duration_Minutes?`<span style="font-size:0.75rem;color:var(--text-secondary);">${w.Duration_Minutes} min</span>`:''}
+                                <button class="btn btn-sm btn-delete" onclick="deleteWorkout(${w.Workout_ID})">🗑️</button>
+                            </div>
+                        </div>
+                        ${w.Exercises?`<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;">📋 ${w.Exercises}</div>`:''}
+                        ${w.Sets_Reps?`<div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">🔄 ${w.Sets_Reps}</div>`:''}
+                        ${w.Notes?`<div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;font-style:italic;">📝 ${w.Notes}</div>`:''}
+                    </div>`).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function populateMemberDropdowns() {
+            try {
+                const res = await fetch(`${API_BASE}/trainers/${trainer.id}/members`);
+                const members = await res.json();
+                ['dietMember','wkMember'].forEach(id => {
+                    const sel = document.getElementById(id);
+                    sel.innerHTML = '<option value="">Select member</option>';
+                    members.forEach(m => { const o=document.createElement('option'); o.value=m.Member_ID; o.textContent=m.Name; sel.appendChild(o); });
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        // Diet Plan Modal
+        function openDietModal() { document.getElementById('dietModal').classList.add('show'); document.getElementById('dietForm').reset(); document.getElementById('dietDate').valueAsDate=new Date(); populateMemberDropdowns(); }
+        function closeDietModal() { document.getElementById('dietModal').classList.remove('show'); }
+
+        document.getElementById('dietForm').addEventListener('submit', async(e)=>{
+            e.preventDefault();
+            const body = { Member_ID:document.getElementById('dietMember').value, Trainer_ID:trainer.id, Plan_Name:document.getElementById('dietPlanName').value, Goal:document.getElementById('dietGoal').value||null, Breakfast:document.getElementById('dietBreakfast').value||null, Lunch:document.getElementById('dietLunch').value||null, Dinner:document.getElementById('dietDinner').value||null, Snacks:document.getElementById('dietSnacks').value||null, Notes:document.getElementById('dietNotes').value||null, Created_At:document.getElementById('dietDate').value||null };
+            try {
+                const res = await fetch(`${API_BASE}/diet-plans`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+                if(res.ok) { closeDietModal(); loadDietPlans(); alert('Diet plan assigned!'); }
+                else { const d=await res.json(); alert(d.error||'Failed'); }
+            } catch(e) { alert('Server error'); }
+        });
+
+        async function deleteDiet(id) { if(!confirm('Delete this diet plan?')) return; await fetch(`${API_BASE}/diet-plans/${id}`,{method:'DELETE'}); loadDietPlans(); }
+
+        // Workout Modal
+        function openWorkoutModal() { document.getElementById('workoutModal').classList.add('show'); document.getElementById('workoutForm').reset(); populateMemberDropdowns(); }
+        function closeWorkoutModal() { document.getElementById('workoutModal').classList.remove('show'); }
+
+        document.getElementById('workoutForm').addEventListener('submit', async(e)=>{
+            e.preventDefault();
+            const body = { Member_ID:document.getElementById('wkMember').value, Trainer_ID:trainer.id, Workout_Name:document.getElementById('wkName').value, Day_Of_Week:document.getElementById('wkDay').value, Exercises:document.getElementById('wkExercises').value||null, Sets_Reps:document.getElementById('wkSetsReps').value||null, Duration_Minutes:document.getElementById('wkDuration').value||null, Notes:document.getElementById('wkNotes').value||null };
+            try {
+                const res = await fetch(`${API_BASE}/workouts`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+                if(res.ok) { closeWorkoutModal(); loadWorkouts(); alert('Workout assigned!'); }
+                else { const d=await res.json(); alert(d.error||'Failed'); }
+            } catch(e) { alert('Server error'); }
+        });
+
+        async function deleteWorkout(id) { if(!confirm('Delete this workout?')) return; await fetch(`${API_BASE}/workouts/${id}`,{method:'DELETE'}); loadWorkouts(); }
+
+        // Init
+        loadMembers();
+        loadDietPlans();
+        loadWorkouts();
+    </script>
+</body>
+</html>

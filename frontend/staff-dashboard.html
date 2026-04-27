@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Staff Dashboard - GymPro Management System">
+    <title>Staff Dashboard | GymPro</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Staff sidebar accent override */
+        .sidebar { border-right-color: rgba(59, 130, 246, 0.2); }
+        .sidebar-brand .brand-icon { background: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+        .nav-link:hover { background: rgba(59, 130, 246, 0.08); }
+        .nav-link.active { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+        .stat-card::before { background: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+
+        /* Report cards */
+        .report-form-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .report-form-card .panel-header {
+            border-bottom: 1px solid var(--border);
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .report-form-card .panel-header h2 { font-size: 1.05rem; font-weight: 600; }
+        .report-form-card .panel-body { padding: 24px; }
+
+        /* Type selector cards */
+        .report-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .report-type-card {
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .report-type-card:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .report-type-card.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .report-type-card .type-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .report-type-card .type-label { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
+        .report-type-card .type-desc { font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px; }
+
+        /* Priority selector */
+        .priority-options {
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .priority-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .priority-btn:hover { border-color: rgba(59, 130, 246, 0.4); }
+        .priority-btn.selected { color: #fff; }
+        .priority-btn.selected.p-low { background: #22c55e; border-color: #22c55e; }
+        .priority-btn.selected.p-medium { background: #eab308; border-color: #eab308; color: #000; }
+        .priority-btn.selected.p-high { background: #f97316; border-color: #f97316; }
+        .priority-btn.selected.p-critical { background: #ef4444; border-color: #ef4444; }
+
+        /* Report history cards */
+        .report-list { display: flex; flex-direction: column; gap: 12px; }
+        .report-item {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            transition: all 0.2s ease;
+        }
+        .report-item:hover { border-color: rgba(59, 130, 246, 0.3); }
+        .report-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .report-item-title { font-weight: 600; font-size: 0.95rem; }
+        .report-item-meta {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 0.78rem; color: var(--text-secondary);
+            margin-top: 6px;
+        }
+        .report-item-body { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-top: 8px; }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .status-open { background: rgba(234, 179, 8, 0.12); color: #facc15; }
+        .status-in_progress { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+        .status-resolved { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
+        .status-closed { background: rgba(139, 143, 163, 0.12); color: var(--text-secondary); }
+
+        .priority-badge {
+            display: inline-flex; padding: 2px 8px; border-radius: 10px;
+            font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+        }
+        .priority-low { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
+        .priority-medium { background: rgba(234, 179, 8, 0.12); color: #facc15; }
+        .priority-high { background: rgba(249, 115, 22, 0.12); color: #fb923c; }
+        .priority-critical { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+
+        .admin-response-box {
+            margin-top: 10px;
+            padding: 12px 16px;
+            background: rgba(59, 130, 246, 0.06);
+            border-left: 3px solid #3b82f6;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+        .admin-response-box strong { color: #60a5fa; }
+
+        .tab-bar {
+            display: flex; gap: 4px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--bg-card);
+            color: #3b82f6;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .welcome-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .welcome-bar .staff-name {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .welcome-bar .staff-name strong { color: #60a5fa; }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏋️</div>
+            <h2>GymPro<small>Staff Portal</small></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Main</div>
+            <a href="staff-dashboard.html" class="nav-link active"><span class="icon">📊</span> Dashboard</a>
+
+            <div class="nav-section-title">Members</div>
+            <a href="add-member.html" class="nav-link"><span class="icon">➕</span> Add Member</a>
+            <a href="view-members.html" class="nav-link"><span class="icon">👥</span> View Members</a>
+
+            <div class="nav-section-title">Trainers</div>
+            <a href="add-trainer.html" class="nav-link"><span class="icon">➕</span> Add Trainer</a>
+            <a href="view-trainers.html" class="nav-link"><span class="icon">🏅</span> View Trainers</a>
+
+            <div class="nav-section-title">Payments</div>
+            <a href="add-payment.html" class="nav-link"><span class="icon">💳</span> Add Payment</a>
+            <a href="payment-history.html" class="nav-link"><span class="icon">📋</span> Payment History</a>
+
+            <div class="nav-section-title">Reports</div>
+            <a href="#" class="nav-link" onclick="switchTab('new'); return false;"><span class="icon">📝</span> New Report</a>
+            <a href="#" class="nav-link" onclick="switchTab('history'); return false;"><span class="icon">📢</span> My Reports</a>
+
+            <div class="nav-section-title">Account</div>
+            <a href="#" class="nav-link" onclick="staffLogout(); return false;"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Staff Dashboard</h1>
+                <div class="welcome-bar">
+                    <span class="staff-name">Welcome, <strong id="staffNameDisplay">Staff</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">📝</div>
+                <div class="stat-value" id="myTotalReports">—</div>
+                <div class="stat-label">My Reports</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">⏳</div>
+                <div class="stat-value" id="myOpenReports">—</div>
+                <div class="stat-label">Open</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div class="stat-value" id="myResolvedReports">—</div>
+                <div class="stat-label">Resolved</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tabNew" onclick="switchTab('new')">📝 New Report</button>
+            <button class="tab-btn" id="tabHistory" onclick="switchTab('history')">📋 My Reports</button>
+        </div>
+
+        <!-- New Report Form -->
+        <div id="newReportSection">
+            <div class="report-form-card">
+                <div class="panel-header">
+                    <h2>Submit Issue Report</h2>
+                </div>
+                <div class="panel-body">
+                    <div id="reportSuccess" style="display:none; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); color: #4ade80; padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.85rem;">
+                        ✅ <span id="reportSuccessText"></span>
+                    </div>
+
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 8px;">Report Type</label>
+                    <div class="report-type-grid" id="reportTypeGrid">
+                        <div class="report-type-card" data-type="member_feedback" onclick="selectType(this)">
+                            <div class="type-icon">💬</div>
+                            <div class="type-label">Member Feedback</div>
+                            <div class="type-desc">Complaints, suggestions from members</div>
+                        </div>
+                        <div class="report-type-card" data-type="equipment_shortage" onclick="selectType(this)">
+                            <div class="type-icon">📦</div>
+                            <div class="type-label">Equipment Shortage</div>
+                            <div class="type-desc">Missing or insufficient equipment</div>
+                        </div>
+                        <div class="report-type-card" data-type="equipment_damage" onclick="selectType(this)">
+                            <div class="type-icon">🔧</div>
+                            <div class="type-label">Equipment Damage</div>
+                            <div class="type-desc">Broken or malfunctioning equipment</div>
+                        </div>
+                        <div class="report-type-card" data-type="other" onclick="selectType(this)">
+                            <div class="type-icon">📌</div>
+                            <div class="type-label">Other Issue</div>
+                            <div class="type-desc">Any other issue to report</div>
+                        </div>
+                    </div>
+
+                    <form id="reportForm" class="form-grid" style="margin-top: 4px;">
+                        <div class="form-group full-width">
+                            <label for="reportTitle">Title</label>
+                            <input type="text" id="reportTitle" placeholder="Brief title for the issue" required>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="reportDesc">Description</label>
+                            <textarea id="reportDesc" rows="4" placeholder="Describe the issue in detail..." required style="resize: vertical;"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <div class="priority-options">
+                                <button type="button" class="priority-btn p-low" data-priority="low" onclick="selectPriority(this)">Low</button>
+                                <button type="button" class="priority-btn p-medium selected" data-priority="medium" onclick="selectPriority(this)">Medium</button>
+                                <button type="button" class="priority-btn p-high" data-priority="high" onclick="selectPriority(this)">High</button>
+                                <button type="button" class="priority-btn p-critical" data-priority="critical" onclick="selectPriority(this)">Critical</button>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="submitReportBtn">📤 Submit Report</button>
+                            <button type="reset" class="btn btn-secondary" onclick="resetForm()">Clear</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report History -->
+        <div id="historySection" style="display: none;">
+            <div class="report-form-card">
+                <div class="panel-header">
+                    <h2>My Reports</h2>
+                    <span class="badge badge-method" id="reportCount">0 reports</span>
+                </div>
+                <div class="panel-body">
+                    <div class="report-list" id="reportList">
+                        <div class="empty-state">
+                            <div class="icon">📋</div>
+                            <p>Loading reports...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+
+        // Auth guard for staff
+        function getStaffUser() {
+            try { return JSON.parse(localStorage.getItem('gym_staff')); } catch { return null; }
+        }
+        const staffUser = getStaffUser();
+        if (!staffUser) { window.location.href = 'staff-login.html'; }
+
+        // Display staff name
+        document.getElementById('staffNameDisplay').textContent = staffUser ? staffUser.name : 'Staff';
+
+        let selectedType = '';
+        let selectedPriority = 'medium';
+
+        function staffLogout() {
+            localStorage.removeItem('gym_staff');
+            window.location.href = 'staff-login.html';
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            const newSection = document.getElementById('newReportSection');
+            const histSection = document.getElementById('historySection');
+            const tabNew = document.getElementById('tabNew');
+            const tabHistory = document.getElementById('tabHistory');
+
+            if (tab === 'new') {
+                newSection.style.display = 'block';
+                histSection.style.display = 'none';
+                tabNew.classList.add('active');
+                tabHistory.classList.remove('active');
+            } else {
+                newSection.style.display = 'none';
+                histSection.style.display = 'block';
+                tabNew.classList.remove('active');
+                tabHistory.classList.add('active');
+                loadReports();
+            }
+        }
+
+        function selectType(el) {
+            document.querySelectorAll('.report-type-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedType = el.dataset.type;
+        }
+
+        function selectPriority(el) {
+            document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedPriority = el.dataset.priority;
+        }
+
+        function resetForm() {
+            selectedType = '';
+            selectedPriority = 'medium';
+            document.querySelectorAll('.report-type-card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('selected'));
+            document.querySelector('.priority-btn.p-medium').classList.add('selected');
+            document.getElementById('reportSuccess').style.display = 'none';
+        }
+
+        // Submit report
+        document.getElementById('reportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!selectedType) {
+                alert('Please select a report type');
+                return;
+            }
+
+            const title = document.getElementById('reportTitle').value.trim();
+            const desc = document.getElementById('reportDesc').value.trim();
+
+            if (!title || !desc) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const btn = document.getElementById('submitReportBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Submitting...';
+
+            try {
+                const res = await fetch(`${API_BASE}/issues`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        Staff_ID: staffUser.id,
+                        Report_Type: selectedType,
+                        Title: title,
+                        Description: desc,
+                        Priority: selectedPriority
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert(data.error || 'Failed to submit report');
+                    btn.disabled = false;
+                    btn.textContent = '📤 Submit Report';
+                    return;
+                }
+
+                const successEl = document.getElementById('reportSuccess');
+                document.getElementById('reportSuccessText').textContent = 'Report submitted successfully! The admin will review it shortly.';
+                successEl.style.display = 'block';
+
+                document.getElementById('reportForm').reset();
+                resetForm();
+                loadStats();
+
+                btn.disabled = false;
+                btn.textContent = '📤 Submit Report';
+            } catch (err) {
+                alert('Cannot connect to server.');
+                btn.disabled = false;
+                btn.textContent = '📤 Submit Report';
+            }
+        });
+
+        // Load reports
+        async function loadReports() {
+            try {
+                const res = await fetch(`${API_BASE}/issues/staff/${staffUser.id}`);
+                const reports = await res.json();
+
+                document.getElementById('reportCount').textContent = `${reports.length} reports`;
+
+                if (reports.length === 0) {
+                    document.getElementById('reportList').innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📋</div>
+                            <p>No reports submitted yet. <a href="#" onclick="switchTab('new'); return false;">Submit your first report</a></p>
+                        </div>`;
+                    return;
+                }
+
+                document.getElementById('reportList').innerHTML = reports.map(r => `
+                    <div class="report-item">
+                        <div class="report-item-header">
+                            <div class="report-item-title">${escapeHtml(r.Title)}</div>
+                            <span class="status-badge status-${r.Status}">${formatStatus(r.Status)}</span>
+                        </div>
+                        <div class="report-item-meta">
+                            <span class="priority-badge priority-${r.Priority}">${r.Priority}</span>
+                            <span>${formatReportType(r.Report_Type)}</span>
+                            <span>📅 ${formatDate(r.Created_At)}</span>
+                        </div>
+                        <div class="report-item-body">${escapeHtml(r.Description)}</div>
+                        ${r.Admin_Response ? `
+                            <div class="admin-response-box">
+                                <strong>🛡️ Admin Response:</strong><br>
+                                ${escapeHtml(r.Admin_Response)}
+                            </div>` : ''}
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('reportList').innerHTML = `
+                    <div class="empty-state"><p>Failed to load reports. Check server connection.</p></div>`;
+            }
+        }
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const res = await fetch(`${API_BASE}/issues/staff/${staffUser.id}`);
+                const reports = await res.json();
+
+                const total = reports.length;
+                const open = reports.filter(r => r.Status === 'open' || r.Status === 'in_progress').length;
+                const resolved = reports.filter(r => r.Status === 'resolved' || r.Status === 'closed').length;
+
+                document.getElementById('myTotalReports').textContent = total;
+                document.getElementById('myOpenReports').textContent = open;
+                document.getElementById('myResolvedReports').textContent = resolved;
+            } catch (err) {
+                console.error('Stats load error:', err);
+            }
+        }
+
+        // Utility functions
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function formatStatus(s) {
+            return s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatReportType(t) {
+            const types = {
+                member_feedback: '💬 Member Feedback',
+                equipment_shortage: '📦 Equipment Shortage',
+                equipment_damage: '🔧 Equipment Damage',
+                other: '📌 Other'
+            };
+            return types[t] || t;
+        }
+
+        // Init
+        loadStats();
+    </script>
+
+</body>
+</html>

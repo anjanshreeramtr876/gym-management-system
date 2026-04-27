@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Issue Reports - Admin View - GymPro">
+    <title>Issue Reports | GymPro Admin</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .filter-bar {
+            display: flex; gap: 8px; flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+        }
+        .filter-btn:hover { border-color: var(--accent); }
+        .filter-btn.active {
+            background: rgba(249, 115, 22, 0.12);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .report-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px 24px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+        .report-card:hover { border-color: rgba(249, 115, 22, 0.3); }
+        .report-card.priority-critical { border-left-color: #ef4444; }
+        .report-card.priority-high { border-left-color: #f97316; }
+        .report-card.priority-medium { border-left-color: #eab308; }
+        .report-card.priority-low { border-left-color: #22c55e; }
+
+        .report-card-header {
+            display: flex; align-items: flex-start;
+            justify-content: space-between; margin-bottom: 10px;
+        }
+        .report-card-title { font-weight: 600; font-size: 1rem; flex: 1; }
+        .report-card-badges { display: flex; gap: 6px; flex-shrink: 0; margin-left: 12px; }
+
+        .report-card-meta {
+            display: flex; align-items: center; gap: 16px;
+            font-size: 0.78rem; color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        .report-card-body {
+            font-size: 0.85rem; color: var(--text-secondary);
+            line-height: 1.6; margin-bottom: 12px;
+        }
+        .report-card-actions {
+            display: flex; gap: 8px; align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .status-open { background: rgba(234, 179, 8, 0.12); color: #facc15; }
+        .status-in_progress { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+        .status-resolved { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
+        .status-closed { background: rgba(139, 143, 163, 0.12); color: var(--text-secondary); }
+
+        .priority-badge {
+            display: inline-flex; padding: 2px 8px; border-radius: 10px;
+            font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+        }
+        .priority-low { background: rgba(34, 197, 94, 0.12); color: #4ade80; }
+        .priority-medium { background: rgba(234, 179, 8, 0.12); color: #facc15; }
+        .priority-high { background: rgba(249, 115, 22, 0.12); color: #fb923c; }
+        .priority-critical { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+
+        .type-badge {
+            display: inline-flex; padding: 3px 10px; border-radius: 10px;
+            font-size: 0.72rem; font-weight: 600;
+            background: rgba(139, 143, 163, 0.12); color: var(--text-secondary);
+        }
+
+        .response-form {
+            margin-top: 12px; padding: 16px;
+            background: rgba(59, 130, 246, 0.04);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: var(--radius-sm);
+        }
+        .response-form textarea {
+            width: 100%; padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit; font-size: 0.85rem;
+            resize: vertical; box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .response-form textarea:focus {
+            outline: none; border-color: var(--accent);
+        }
+        .response-existing {
+            margin-top: 10px;
+            padding: 12px 16px;
+            background: rgba(59, 130, 246, 0.06);
+            border-left: 3px solid #3b82f6;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+        .response-existing strong { color: #60a5fa; }
+
+        /* Status dropdown */
+        .status-select {
+            padding: 6px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: inherit; font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .status-select option { background: var(--bg-secondary); }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏋️</div>
+            <h2>GymPro<small>Management System</small></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Main</div>
+            <a href="index.html" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+
+            <div class="nav-section-title">Members</div>
+            <a href="add-member.html" class="nav-link"><span class="icon">➕</span> Add Member</a>
+            <a href="view-members.html" class="nav-link"><span class="icon">👥</span> View Members</a>
+
+            <div class="nav-section-title">Trainers</div>
+            <a href="add-trainer.html" class="nav-link"><span class="icon">➕</span> Add Trainer</a>
+            <a href="view-trainers.html" class="nav-link"><span class="icon">🏅</span> View Trainers</a>
+
+            <div class="nav-section-title">Payments</div>
+            <a href="add-payment.html" class="nav-link"><span class="icon">💳</span> Add Payment</a>
+            <a href="payment-history.html" class="nav-link"><span class="icon">📋</span> Payment History</a>
+
+            <div class="nav-section-title">Staff & Operations</div>
+            <a href="manage-staff.html" class="nav-link"><span class="icon">👨‍💼</span> Manage Staff</a>
+            <a href="expenditure.html" class="nav-link"><span class="icon">💰</span> Expenditure</a>
+            <a href="admin-reports.html" class="nav-link active"><span class="icon">📢</span> Issue Reports</a>
+
+            <div class="nav-section-title">Account</div>
+            <a href="#" class="nav-link" onclick="logout(); return false;"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Issue Reports</h1>
+                <p>View and respond to staff-reported issues</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon orange">📢</div>
+                <div class="stat-value" id="statTotal">—</div>
+                <div class="stat-label">Total Reports</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red">⏳</div>
+                <div class="stat-value" id="statOpen">—</div>
+                <div class="stat-label">Open</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">🔄</div>
+                <div class="stat-value" id="statProgress">—</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div class="stat-value" id="statResolved">—</div>
+                <div class="stat-label">Resolved</div>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all" onclick="filterReports('all', this)">All</button>
+            <button class="filter-btn" data-filter="open" onclick="filterReports('open', this)">⏳ Open</button>
+            <button class="filter-btn" data-filter="in_progress" onclick="filterReports('in_progress', this)">🔄 In Progress</button>
+            <button class="filter-btn" data-filter="resolved" onclick="filterReports('resolved', this)">✅ Resolved</button>
+            <button class="filter-btn" data-filter="closed" onclick="filterReports('closed', this)">🔒 Closed</button>
+        </div>
+
+        <!-- Reports List -->
+        <div id="reportsList">
+            <div class="empty-state"><p>Loading reports...</p></div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script>
+        const issueAPI = `${API_BASE}/issues`;
+        let allReports = [];
+        let currentFilter = 'all';
+
+        async function loadReports() {
+            try {
+                const res = await fetch(issueAPI);
+                allReports = await res.json();
+                renderReports();
+                loadStats();
+            } catch (err) {
+                document.getElementById('reportsList').innerHTML =
+                    '<div class="empty-state"><p>Failed to load reports.</p></div>';
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${issueAPI}/stats/summary`);
+                const data = await res.json();
+                document.getElementById('statTotal').textContent = data.total;
+                document.getElementById('statOpen').textContent = data.open;
+                document.getElementById('statProgress').textContent = data.in_progress;
+                document.getElementById('statResolved').textContent = data.resolved;
+            } catch (err) {
+                console.error('Stats error:', err);
+            }
+        }
+
+        function filterReports(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderReports();
+        }
+
+        function renderReports() {
+            const filtered = currentFilter === 'all' 
+                ? allReports 
+                : allReports.filter(r => r.Status === currentFilter);
+
+            const container = document.getElementById('reportsList');
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No reports found</p></div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(r => `
+                <div class="report-card priority-${r.Priority}">
+                    <div class="report-card-header">
+                        <div class="report-card-title">${escapeHtml(r.Title)}</div>
+                        <div class="report-card-badges">
+                            <span class="priority-badge priority-${r.Priority}">${r.Priority}</span>
+                            <span class="status-badge status-${r.Status}">${formatStatus(r.Status)}</span>
+                        </div>
+                    </div>
+                    <div class="report-card-meta">
+                        <span>👤 ${escapeHtml(r.Staff_Name || 'Unknown Staff')}</span>
+                        <span class="type-badge">${formatReportType(r.Report_Type)}</span>
+                        <span>📅 ${formatDate(r.Created_At)}</span>
+                    </div>
+                    <div class="report-card-body">${escapeHtml(r.Description)}</div>
+                    
+                    ${r.Admin_Response ? `
+                        <div class="response-existing">
+                            <strong>🛡️ Your Response:</strong><br>
+                            ${escapeHtml(r.Admin_Response)}
+                        </div>
+                    ` : ''}
+
+                    <div class="report-card-actions">
+                        <select class="status-select" onchange="updateStatus(${r.Report_ID}, this.value)" id="statusSelect_${r.Report_ID}">
+                            <option value="open" ${r.Status === 'open' ? 'selected' : ''}>⏳ Open</option>
+                            <option value="in_progress" ${r.Status === 'in_progress' ? 'selected' : ''}>🔄 In Progress</option>
+                            <option value="resolved" ${r.Status === 'resolved' ? 'selected' : ''}>✅ Resolved</option>
+                            <option value="closed" ${r.Status === 'closed' ? 'selected' : ''}>🔒 Closed</option>
+                        </select>
+                        <button class="btn btn-sm btn-edit" onclick="toggleResponseForm(${r.Report_ID})">💬 Respond</button>
+                        <button class="btn btn-sm btn-delete" onclick="deleteReport(${r.Report_ID})">🗑️</button>
+                    </div>
+
+                    <div class="response-form" id="responseForm_${r.Report_ID}" style="display: none;">
+                        <textarea id="responseText_${r.Report_ID}" rows="3" placeholder="Type your response to the staff member...">${r.Admin_Response || ''}</textarea>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-primary" onclick="submitResponse(${r.Report_ID})">📤 Send Response</button>
+                            <button class="btn btn-sm btn-secondary" onclick="toggleResponseForm(${r.Report_ID})">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatStatus(s) {
+            return s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatReportType(t) {
+            const types = {
+                member_feedback: '💬 Member Feedback',
+                equipment_shortage: '📦 Equipment Shortage',
+                equipment_damage: '🔧 Equipment Damage',
+                other: '📌 Other'
+            };
+            return types[t] || t;
+        }
+
+        function toggleResponseForm(id) {
+            const form = document.getElementById(`responseForm_${id}`);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function updateStatus(id, status) {
+            const report = allReports.find(r => r.Report_ID === id);
+            try {
+                const res = await fetch(`${issueAPI}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Status: status, Admin_Response: report?.Admin_Response || null })
+                });
+                if (res.ok) {
+                    showToast(`Status updated to ${formatStatus(status)}`, 'success');
+                    loadReports();
+                }
+            } catch (err) {
+                showToast('Failed to update status', 'error');
+            }
+        }
+
+        async function submitResponse(id) {
+            const text = document.getElementById(`responseText_${id}`).value.trim();
+            const status = document.getElementById(`statusSelect_${id}`).value;
+
+            if (!text) {
+                showToast('Please enter a response', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${issueAPI}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Status: status, Admin_Response: text })
+                });
+                if (res.ok) {
+                    showToast('Response sent!', 'success');
+                    loadReports();
+                }
+            } catch (err) {
+                showToast('Failed to send response', 'error');
+            }
+        }
+
+        async function deleteReport(id) {
+            if (!confirm('Delete this report?')) return;
+            try {
+                const res = await fetch(`${issueAPI}/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('Report deleted', 'success');
+                    loadReports();
+                }
+            } catch (err) {
+                showToast('Delete failed', 'error');
+            }
+        }
+
+        // Init
+        loadReports();
+    </script>
+</body>
+</html>

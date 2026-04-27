@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Assign a diet plan to a gym member">
+    <title>Assign Diet Plan | Gym Management System</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏋️</div>
+            <h2>GymPro<small>Management System</small></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Main</div>
+            <a href="index.html" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+            <div class="nav-section-title">Members</div>
+            <a href="add-member.html" class="nav-link"><span class="icon">➕</span> Add Member</a>
+            <a href="view-members.html" class="nav-link"><span class="icon">👥</span> View Members</a>
+            <div class="nav-section-title">Trainers</div>
+            <a href="add-trainer.html" class="nav-link"><span class="icon">➕</span> Add Trainer</a>
+            <a href="view-trainers.html" class="nav-link"><span class="icon">🏅</span> View Trainers</a>
+            <div class="nav-section-title">Diet Plans</div>
+            <a href="assign-diet-plan.html" class="nav-link"><span class="icon">➕</span> Assign Diet Plan</a>
+            <a href="view-diet-plans.html" class="nav-link"><span class="icon">🥗</span> View Diet Plans</a>
+            <div class="nav-section-title">Payments</div>
+            <a href="add-payment.html" class="nav-link"><span class="icon">💳</span> Add Payment</a>
+            <a href="payment-history.html" class="nav-link"><span class="icon">📋</span> Payment History</a>
+
+            <div class="nav-section-title">Staff & Operations</div>
+            <a href="manage-staff.html" class="nav-link"><span class="icon">👨‍💼</span> Manage Staff</a>
+            <a href="expenditure.html" class="nav-link"><span class="icon">💰</span> Expenditure</a>
+            <a href="admin-reports.html" class="nav-link"><span class="icon">📢</span> Issue Reports</a>
+
+            <div class="nav-section-title">Account</div>
+            <a href="#" class="nav-link" onclick="logout(); return false;"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 id="pageTitle">Assign Diet Plan</h1>
+                <p>Create a personalized diet plan for a member via their assigned trainer.</p>
+            </div>
+            <a href="view-diet-plans.html" class="btn btn-secondary">← Back to Diet Plans</a>
+        </div>
+
+        <div class="panel">
+            <div class="panel-body">
+                <!-- Trainer info banner (shown after selecting member) -->
+                <div class="trainer-info-banner" id="trainerBanner" style="display:none;">
+                    <span class="trainer-info-icon">🏅</span>
+                    <span id="trainerInfoText">Trainer will be auto-filled based on member's assignment</span>
+                </div>
+
+                <form id="dietPlanForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="Member_ID">Select Member *</label>
+                        <select id="Member_ID" name="Member_ID" required>
+                            <option value="">Choose a member</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="Trainer_ID">Assigned Trainer</label>
+                        <select id="Trainer_ID" name="Trainer_ID" disabled>
+                            <option value="">Auto-filled from member</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="Plan_Name">Plan Name *</label>
+                        <input type="text" id="Plan_Name" name="Plan_Name" required placeholder="e.g. Weight Loss Starter Plan">
+                    </div>
+                    <div class="form-group">
+                        <label for="Goal">Goal</label>
+                        <select id="Goal" name="Goal">
+                            <option value="">Select Goal</option>
+                            <option value="Weight Loss">Weight Loss</option>
+                            <option value="Muscle Gain">Muscle Gain</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Lean Bulk">Lean Bulk</option>
+                            <option value="Endurance">Endurance</option>
+                            <option value="General Fitness">General Fitness</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="Created_At">Plan Date</label>
+                        <input type="date" id="Created_At" name="Created_At">
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="Breakfast">🌅 Breakfast</label>
+                        <textarea id="Breakfast" name="Breakfast" rows="3" placeholder="e.g. 2 boiled eggs, oats with milk, banana..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="Lunch">☀️ Lunch</label>
+                        <textarea id="Lunch" name="Lunch" rows="3" placeholder="e.g. Grilled chicken breast, brown rice, salad..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="Dinner">🌙 Dinner</label>
+                        <textarea id="Dinner" name="Dinner" rows="3" placeholder="e.g. Paneer tikka, dal, roti, curd..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="Snacks">🍎 Snacks</label>
+                        <textarea id="Snacks" name="Snacks" rows="2" placeholder="e.g. Protein shake, almonds, fruits..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="Notes">📝 Additional Notes</label>
+                        <textarea id="Notes" name="Notes" rows="2" placeholder="e.g. Drink 3L water daily, avoid sugar..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">🥗 Assign Diet Plan</button>
+                        <a href="view-diet-plans.html" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script>
+        const editId = getQueryParam('id');
+        let membersData = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Set default date
+            document.getElementById('Created_At').value = new Date().toISOString().split('T')[0];
+
+            // Load members and trainers
+            try {
+                const [members, trainers] = await Promise.all([
+                    apiGet('/members'),
+                    apiGet('/trainers')
+                ]);
+                membersData = members;
+
+                const memberSelect = document.getElementById('Member_ID');
+                members.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.Member_ID;
+                    opt.textContent = `${m.Name} (ID: ${m.Member_ID})`;
+                    opt.dataset.trainerId = m.Trainer_ID || '';
+                    opt.dataset.trainerName = m.Trainer_Name || '';
+                    memberSelect.appendChild(opt);
+                });
+
+                // Populate trainer select (for display)
+                const trainerSelect = document.getElementById('Trainer_ID');
+                trainerSelect.innerHTML = '<option value="">Auto-filled from member</option>';
+                trainers.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.Trainer_ID;
+                    opt.textContent = `${t.Trainer_Name} (${t.Specialization})`;
+                    trainerSelect.appendChild(opt);
+                });
+
+            } catch (err) {
+                console.error('Failed to load data:', err);
+            }
+
+            // If editing, load existing plan
+            if (editId) {
+                document.getElementById('pageTitle').textContent = 'Edit Diet Plan';
+                document.getElementById('submitBtn').textContent = '💾 Update Diet Plan';
+                try {
+                    const plan = await apiGet(`/diet-plans/${editId}`);
+                    document.getElementById('Member_ID').value = plan.Member_ID;
+                    document.getElementById('Trainer_ID').value = plan.Trainer_ID;
+                    document.getElementById('Trainer_ID').disabled = false;
+                    document.getElementById('Plan_Name').value = plan.Plan_Name || '';
+                    document.getElementById('Goal').value = plan.Goal || '';
+                    document.getElementById('Breakfast').value = plan.Breakfast || '';
+                    document.getElementById('Lunch').value = plan.Lunch || '';
+                    document.getElementById('Dinner').value = plan.Dinner || '';
+                    document.getElementById('Snacks').value = plan.Snacks || '';
+                    document.getElementById('Notes').value = plan.Notes || '';
+                    document.getElementById('Created_At').value = plan.Created_At ? plan.Created_At.split('T')[0] : '';
+                    updateTrainerBanner(plan.Trainer_Name);
+                } catch (err) {
+                    showToast('Failed to load diet plan', 'error');
+                }
+            }
+        });
+
+        // When member is selected, auto-fill trainer
+        document.getElementById('Member_ID').addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            const trainerId = selected.dataset.trainerId;
+            const trainerName = selected.dataset.trainerName;
+            const trainerSelect = document.getElementById('Trainer_ID');
+            const banner = document.getElementById('trainerBanner');
+
+            if (trainerId) {
+                trainerSelect.value = trainerId;
+                trainerSelect.disabled = false;
+                updateTrainerBanner(trainerName);
+            } else {
+                trainerSelect.value = '';
+                trainerSelect.disabled = true;
+                banner.style.display = 'flex';
+                document.getElementById('trainerInfoText').textContent = '⚠️ This member has no assigned trainer. Please assign a trainer first.';
+                banner.style.background = 'rgba(239, 68, 68, 0.1)';
+                banner.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            }
+        });
+
+        function updateTrainerBanner(trainerName) {
+            const banner = document.getElementById('trainerBanner');
+            banner.style.display = 'flex';
+            document.getElementById('trainerInfoText').textContent = `Trainer: ${trainerName}`;
+            banner.style.background = 'rgba(34, 197, 94, 0.1)';
+            banner.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+        }
+
+        document.getElementById('dietPlanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const trainerId = document.getElementById('Trainer_ID').value;
+            if (!trainerId) {
+                showToast('Cannot assign diet plan: member has no trainer assigned', 'error');
+                return;
+            }
+
+            const data = {
+                Member_ID: document.getElementById('Member_ID').value,
+                Trainer_ID: trainerId,
+                Plan_Name: document.getElementById('Plan_Name').value,
+                Goal: document.getElementById('Goal').value || null,
+                Breakfast: document.getElementById('Breakfast').value || null,
+                Lunch: document.getElementById('Lunch').value || null,
+                Dinner: document.getElementById('Dinner').value || null,
+                Snacks: document.getElementById('Snacks').value || null,
+                Notes: document.getElementById('Notes').value || null,
+                Created_At: document.getElementById('Created_At').value || null
+            };
+
+            try {
+                if (editId) {
+                    await apiPut(`/diet-plans/${editId}`, data);
+                    showToast('Diet plan updated successfully!');
+                } else {
+                    await apiPost('/diet-plans', data);
+                    showToast('Diet plan assigned successfully!');
+                }
+                setTimeout(() => window.location.href = 'view-diet-plans.html', 1000);
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        });
+    </script>
+
+    <style>
+        .trainer-info-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 24px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        .trainer-info-icon { font-size: 1.2rem; }
+
+        textarea {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.88rem;
+            resize: vertical;
+            transition: border-color var(--transition);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+        }
+        textarea::placeholder { color: var(--text-muted); }
+    </style>
+</body>
+</html>

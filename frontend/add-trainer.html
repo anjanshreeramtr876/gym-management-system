@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Add or edit a gym trainer">
+    <title>Add Trainer | Gym Management System</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏋️</div>
+            <h2>GymPro<small>Management System</small></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Main</div>
+            <a href="index.html" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+            <div class="nav-section-title">Members</div>
+            <a href="add-member.html" class="nav-link"><span class="icon">➕</span> Add Member</a>
+            <a href="view-members.html" class="nav-link"><span class="icon">👥</span> View Members</a>
+            <div class="nav-section-title">Trainers</div>
+            <a href="add-trainer.html" class="nav-link"><span class="icon">➕</span> Add Trainer</a>
+            <a href="view-trainers.html" class="nav-link"><span class="icon">🏅</span> View Trainers</a>
+            <div class="nav-section-title">Payments</div>
+            <a href="add-payment.html" class="nav-link"><span class="icon">💳</span> Add Payment</a>
+            <a href="payment-history.html" class="nav-link"><span class="icon">📋</span> Payment History</a>
+
+            <div class="nav-section-title">Staff & Operations</div>
+            <a href="manage-staff.html" class="nav-link"><span class="icon">👨‍💼</span> Manage Staff</a>
+            <a href="expenditure.html" class="nav-link"><span class="icon">💰</span> Expenditure</a>
+            <a href="admin-reports.html" class="nav-link"><span class="icon">📢</span> Issue Reports</a>
+
+            <div class="nav-section-title">Account</div>
+            <a href="#" class="nav-link" onclick="logout(); return false;"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 id="pageTitle">Add New Trainer</h1>
+                <p>Register a new trainer for your gym.</p>
+            </div>
+            <a href="view-trainers.html" class="btn btn-secondary">← Back to Trainers</a>
+        </div>
+
+        <div class="panel">
+            <div class="panel-body">
+                <form id="trainerForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="Trainer_Name">Trainer Name *</label>
+                        <input type="text" id="Trainer_Name" name="Trainer_Name" required placeholder="Enter trainer name">
+                    </div>
+                    <div class="form-group">
+                        <label for="Specialization">Specialization</label>
+                        <input type="text" id="Specialization" name="Specialization" placeholder="e.g. Weight Training, Yoga">
+                    </div>
+                    <div class="form-group">
+                        <label for="Phone">Phone</label>
+                        <input type="tel" id="Phone" name="Phone" placeholder="e.g. 9876543210">
+                    </div>
+                    <div class="form-group">
+                        <label for="Experience">Experience (Years)</label>
+                        <input type="number" id="Experience" name="Experience" min="0" max="50" placeholder="e.g. 5">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">➕ Add Trainer</button>
+                        <a href="view-trainers.html" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script>
+        const editId = getQueryParam('id');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (editId) {
+                document.getElementById('pageTitle').textContent = 'Edit Trainer';
+                document.getElementById('submitBtn').textContent = '💾 Update Trainer';
+                try {
+                    const trainer = await apiGet(`/trainers/${editId}`);
+                    document.getElementById('Trainer_Name').value = trainer.Trainer_Name || '';
+                    document.getElementById('Specialization').value = trainer.Specialization || '';
+                    document.getElementById('Phone').value = trainer.Phone || '';
+                    document.getElementById('Experience').value = trainer.Experience || '';
+                } catch (err) {
+                    showToast('Failed to load trainer data', 'error');
+                }
+            }
+        });
+
+        document.getElementById('trainerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                Trainer_Name: document.getElementById('Trainer_Name').value,
+                Specialization: document.getElementById('Specialization').value || null,
+                Phone: document.getElementById('Phone').value || null,
+                Experience: document.getElementById('Experience').value || 0
+            };
+
+            try {
+                if (editId) {
+                    await apiPut(`/trainers/${editId}`, data);
+                    showToast('Trainer updated successfully!');
+                    setTimeout(() => window.location.href = 'view-trainers.html', 1000);
+                } else {
+                    const result = await apiPost('/trainers', data);
+                    if (result.access_key) {
+                        alert(`Trainer added!\\n\\nAccess Key: ${result.access_key}\\n\\nShare this key with the trainer for login.`);
+                    }
+                    showToast('Trainer added successfully!');
+                    setTimeout(() => window.location.href = 'view-trainers.html', 1000);
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

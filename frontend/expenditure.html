@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Expenditure Calculator - GymPro Admin">
+    <title>Expenditure | GymPro</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .finance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        .finance-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .finance-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+        .finance-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .finance-card.revenue::before { background: linear-gradient(135deg, #22c55e, #4ade80); }
+        .finance-card.expense::before { background: linear-gradient(135deg, #ef4444, #f87171); }
+        .finance-card.profit::before { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+        .finance-card.entries::before { background: var(--gradient); }
+
+        .finance-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 14px;
+        }
+        .finance-icon.revenue-icon { background: rgba(34, 197, 94, 0.12); }
+        .finance-icon.expense-icon { background: rgba(239, 68, 68, 0.12); }
+        .finance-icon.profit-icon { background: rgba(59, 130, 246, 0.12); }
+        .finance-icon.entries-icon { background: rgba(249, 115, 22, 0.12); }
+
+        .finance-value {
+            font-size: 1.8rem; font-weight: 700;
+            line-height: 1; margin-bottom: 4px;
+        }
+        .finance-value.positive { color: #4ade80; }
+        .finance-value.negative { color: #f87171; }
+        .finance-label {
+            font-size: 0.8rem; color: var(--text-secondary);
+        }
+
+        /* Category breakdown */
+        .category-list { display: flex; flex-direction: column; gap: 10px; }
+        .category-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+        }
+        .category-bar-container {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .category-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+        .category-name { font-size: 0.85rem; font-weight: 600; min-width: 120px; }
+        .category-amount { font-size: 0.85rem; color: var(--accent); font-weight: 600; min-width: 100px; text-align: right; }
+
+        /* Two column layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 900px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 100%; max-width: 520px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+            animation: modalEntry 0.3s ease-out;
+        }
+        @keyframes modalEntry {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px; border-bottom: 1px solid var(--border);
+        }
+        .modal-header h3 { font-size: 1.05rem; font-weight: 600; }
+        .modal-close {
+            background: none; border: none; color: var(--text-secondary);
+            font-size: 1.3rem; cursor: pointer; padding: 4px;
+        }
+        .modal-close:hover { color: var(--text-primary); }
+        .modal-body { padding: 24px; }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏋️</div>
+            <h2>GymPro<small>Management System</small></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Main</div>
+            <a href="index.html" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+
+            <div class="nav-section-title">Members</div>
+            <a href="add-member.html" class="nav-link"><span class="icon">➕</span> Add Member</a>
+            <a href="view-members.html" class="nav-link"><span class="icon">👥</span> View Members</a>
+
+            <div class="nav-section-title">Trainers</div>
+            <a href="add-trainer.html" class="nav-link"><span class="icon">➕</span> Add Trainer</a>
+            <a href="view-trainers.html" class="nav-link"><span class="icon">🏅</span> View Trainers</a>
+
+            <div class="nav-section-title">Payments</div>
+            <a href="add-payment.html" class="nav-link"><span class="icon">💳</span> Add Payment</a>
+            <a href="payment-history.html" class="nav-link"><span class="icon">📋</span> Payment History</a>
+
+            <div class="nav-section-title">Staff & Operations</div>
+            <a href="manage-staff.html" class="nav-link"><span class="icon">👨‍💼</span> Manage Staff</a>
+            <a href="expenditure.html" class="nav-link active"><span class="icon">💰</span> Expenditure</a>
+            <a href="admin-reports.html" class="nav-link"><span class="icon">📢</span> Issue Reports</a>
+
+            <div class="nav-section-title">Account</div>
+            <a href="#" class="nav-link" onclick="logout(); return false;"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Expenditure Calculator</h1>
+                <p>Track gym expenses and calculate profit/loss</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddModal()">➕ Add Expense</button>
+        </div>
+
+        <!-- Finance Summary -->
+        <div class="finance-grid">
+            <div class="finance-card revenue">
+                <div class="finance-icon revenue-icon">💰</div>
+                <div class="finance-value positive" id="totalRevenue">₹0</div>
+                <div class="finance-label">Total Revenue</div>
+            </div>
+            <div class="finance-card expense">
+                <div class="finance-icon expense-icon">📉</div>
+                <div class="finance-value" id="totalExpenditure" style="color: #f87171;">₹0</div>
+                <div class="finance-label">Total Expenditure</div>
+            </div>
+            <div class="finance-card profit">
+                <div class="finance-icon profit-icon">📊</div>
+                <div class="finance-value" id="netProfit">₹0</div>
+                <div class="finance-label">Net Profit / Loss</div>
+            </div>
+            <div class="finance-card entries">
+                <div class="finance-icon entries-icon">📝</div>
+                <div class="finance-value" id="totalEntries">0</div>
+                <div class="finance-label">Expense Entries</div>
+            </div>
+        </div>
+
+        <!-- Two columns: Category breakdown + Expense list -->
+        <div class="two-col">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Category Breakdown</h2>
+                </div>
+                <div class="panel-body">
+                    <div class="category-list" id="categoryList">
+                        <div class="empty-state"><p>Loading...</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Monthly Summary</h2>
+                </div>
+                <div class="panel-body">
+                    <div id="monthlyList" class="category-list">
+                        <div class="empty-state"><p>Loading...</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expense History Table -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Expense History</h2>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTableBody">
+                        <tr><td colspan="6" class="empty-state"><p>Loading...</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Expense Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>➕ Add Expense</h3>
+                <button class="modal-close" onclick="closeAddModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="addExpenseForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="expCategory">Category *</label>
+                        <select id="expCategory" required>
+                            <option value="">Select category</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Salaries">Salaries</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Supplies">Supplies</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expAmount">Amount (₹) *</label>
+                        <input type="number" id="expAmount" placeholder="0.00" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expDate">Date *</label>
+                        <input type="date" id="expDate" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="expDesc">Description</label>
+                        <input type="text" id="expDesc" placeholder="Brief description of the expense">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Save Expense</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        const expAPI = `${API_BASE}/expenditures`;
+
+        // Set default date to today
+        document.getElementById('expDate').valueAsDate = new Date();
+
+        async function loadSummary() {
+            try {
+                const res = await fetch(`${expAPI}/summary`);
+                const data = await res.json();
+
+                document.getElementById('totalRevenue').textContent = formatCurrency(data.total_revenue);
+                document.getElementById('totalExpenditure').textContent = formatCurrency(data.total_expenditure);
+                document.getElementById('totalEntries').textContent = data.total_entries;
+
+                const profitEl = document.getElementById('netProfit');
+                profitEl.textContent = formatCurrency(Math.abs(data.net_profit));
+                if (data.net_profit >= 0) {
+                    profitEl.classList.add('positive');
+                    profitEl.classList.remove('negative');
+                    profitEl.textContent = '+' + formatCurrency(data.net_profit);
+                } else {
+                    profitEl.classList.remove('positive');
+                    profitEl.classList.add('negative');
+                    profitEl.textContent = '-' + formatCurrency(Math.abs(data.net_profit));
+                }
+
+                // Category breakdown
+                const catList = document.getElementById('categoryList');
+                if (data.by_category.length === 0) {
+                    catList.innerHTML = '<div class="empty-state"><p>No expenses recorded yet</p></div>';
+                } else {
+                    const maxCat = Math.max(...data.by_category.map(c => c.total));
+                    const colors = ['#f97316', '#3b82f6', '#22c55e', '#eab308', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#f59e0b'];
+                    catList.innerHTML = data.by_category.map((c, i) => `
+                        <div class="category-item">
+                            <span class="category-name">${c.Category}</span>
+                            <div class="category-bar-container">
+                                <div class="category-bar" style="width: ${(c.total / maxCat) * 100}%; background: ${colors[i % colors.length]};"></div>
+                            </div>
+                            <span class="category-amount">${formatCurrency(c.total)}</span>
+                        </div>
+                    `).join('');
+                }
+
+                // Monthly summary
+                const monthList = document.getElementById('monthlyList');
+                if (data.monthly.length === 0) {
+                    monthList.innerHTML = '<div class="empty-state"><p>No monthly data yet</p></div>';
+                } else {
+                    const maxMonth = Math.max(...data.monthly.map(m => m.total));
+                    monthList.innerHTML = data.monthly.map(m => {
+                        const [y, mo] = m.month.split('-');
+                        const monthName = new Date(y, mo - 1).toLocaleString('en-US', { month: 'short', year: 'numeric' });
+                        return `
+                            <div class="category-item">
+                                <span class="category-name">${monthName}</span>
+                                <div class="category-bar-container">
+                                    <div class="category-bar" style="width: ${(m.total / maxMonth) * 100}%; background: #ef4444;"></div>
+                                </div>
+                                <span class="category-amount">${formatCurrency(m.total)}</span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error('Summary error:', err);
+            }
+        }
+
+        async function loadExpenses() {
+            try {
+                const res = await fetch(expAPI);
+                const expenses = await res.json();
+
+                const tbody = document.getElementById('expenseTableBody');
+                if (expenses.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="icon">💰</div><p>No expenses recorded. <a href="#" onclick="openAddModal(); return false;">Add your first expense</a></p></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = expenses.map(e => `
+                    <tr>
+                        <td>${e.Expenditure_ID}</td>
+                        <td><span class="badge badge-method">${e.Category}</span></td>
+                        <td>${e.Description || '—'}</td>
+                        <td><strong style="color: #f87171;">${formatCurrency(e.Amount)}</strong></td>
+                        <td>${formatDate(e.Expenditure_Date)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-delete" onclick="deleteExpense(${e.Expenditure_ID})">🗑️</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Load error:', err);
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('show');
+            document.getElementById('addExpenseForm').reset();
+            document.getElementById('expDate').valueAsDate = new Date();
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('show');
+        }
+
+        document.getElementById('addExpenseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const body = {
+                Category: document.getElementById('expCategory').value,
+                Amount: document.getElementById('expAmount').value,
+                Expenditure_Date: document.getElementById('expDate').value,
+                Description: document.getElementById('expDesc').value.trim()
+            };
+
+            try {
+                const res = await fetch(expAPI, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (res.ok) {
+                    showToast('Expense added!', 'success');
+                    closeAddModal();
+                    loadExpenses();
+                    loadSummary();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Failed to add expense', 'error');
+                }
+            } catch (err) {
+                showToast('Server error', 'error');
+            }
+        });
+
+        async function deleteExpense(id) {
+            if (!confirm('Delete this expense?')) return;
+            try {
+                const res = await fetch(`${expAPI}/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('Expense deleted', 'success');
+                    loadExpenses();
+                    loadSummary();
+                }
+            } catch (err) {
+                showToast('Delete failed', 'error');
+            }
+        }
+
+        // Init
+        loadSummary();
+        loadExpenses();
+    </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View all gym trainers">
+    <title>View Trainers | Gym Management System</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏋️</div>
+            <h2>GymPro<small>Management System</small></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Main</div>
+            <a href="index.html" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+            <div class="nav-section-title">Members</div>
+            <a href="add-member.html" class="nav-link"><span class="icon">➕</span> Add Member</a>
+            <a href="view-members.html" class="nav-link"><span class="icon">👥</span> View Members</a>
+            <div class="nav-section-title">Trainers</div>
+            <a href="add-trainer.html" class="nav-link"><span class="icon">➕</span> Add Trainer</a>
+            <a href="view-trainers.html" class="nav-link"><span class="icon">🏅</span> View Trainers</a>
+            <div class="nav-section-title">Payments</div>
+            <a href="add-payment.html" class="nav-link"><span class="icon">💳</span> Add Payment</a>
+            <a href="payment-history.html" class="nav-link"><span class="icon">📋</span> Payment History</a>
+
+            <div class="nav-section-title">Staff & Operations</div>
+            <a href="manage-staff.html" class="nav-link"><span class="icon">👨‍💼</span> Manage Staff</a>
+            <a href="expenditure.html" class="nav-link"><span class="icon">💰</span> Expenditure</a>
+            <a href="admin-reports.html" class="nav-link"><span class="icon">📢</span> Issue Reports</a>
+
+            <div class="nav-section-title">Account</div>
+            <a href="#" class="nav-link" onclick="logout(); return false;"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Trainers</h1>
+                <p>Manage all gym trainers and their specializations.</p>
+            </div>
+            <a href="add-trainer.html" class="btn btn-primary">➕ Add Trainer</a>
+        </div>
+
+        <div class="panel">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Specialization</th>
+                            <th>Phone</th>
+                            <th>Experience</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trainersBody">
+                        <tr><td colspan="6" class="empty-state"><p>Loading...</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script>
+        async function loadTrainers() {
+            const tbody = document.getElementById('trainersBody');
+            try {
+                const trainers = await apiGet('/trainers');
+                if (trainers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="icon">🏅</div><p>No trainers found. <a href="add-trainer.html">Add your first trainer</a></p></td></tr>';
+                    return;
+                }
+                tbody.innerHTML = trainers.map(t => `
+                    <tr>
+                        <td>${t.Trainer_ID}</td>
+                        <td><strong>${t.Trainer_Name}</strong></td>
+                        <td>${t.Specialization || '—'}</td>
+                        <td>${t.Phone || '—'}</td>
+                        <td>${t.Experience} year${t.Experience !== 1 ? 's' : ''}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="add-trainer.html?id=${t.Trainer_ID}" class="btn btn-edit btn-sm">Edit</a>
+                                <button onclick="deleteTrainer(${t.Trainer_ID}, '${t.Trainer_Name}')" class="btn btn-delete btn-sm">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Could not load trainers. Is the server running?</p></td></tr>';
+            }
+        }
+
+        async function deleteTrainer(id, name) {
+            if (!confirmDelete(name)) return;
+            try {
+                await apiDelete(`/trainers/${id}`);
+                showToast('Trainer deleted successfully');
+                loadTrainers();
+            } catch (err) {
+                showToast('Error deleting trainer', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadTrainers);
+    </script>
+</body>
+</html>

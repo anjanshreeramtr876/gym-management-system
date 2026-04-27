@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to Gym Management System - GymPro">
+    <title>Login | GymPro Management System</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+    <div class="login-page">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+
+        <div class="login-card">
+            <div class="brand">
+                <div class="brand-icon">🏋️</div>
+                <h1>GymPro</h1>
+                <p>Management System</p>
+            </div>
+
+            <div class="form-title" id="formTitle">Admin Sign In</div>
+
+            <div class="error-message" id="errorMsg">
+                <span>⚠️</span>
+                <span id="errorText"></span>
+            </div>
+
+            <div class="success-message" id="successMsg">
+                <span>✅</span>
+                <span id="successText"></span>
+            </div>
+
+            <form id="authForm" autocomplete="off">
+                <!-- Username -->
+                <div class="input-group">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="username" placeholder="Username" required autocomplete="username">
+                </div>
+
+                <!-- Email (Register only) -->
+                <div class="input-group register-only" id="emailGroup">
+                    <span class="input-icon">📧</span>
+                    <input type="email" id="email" placeholder="Email (optional)" autocomplete="email">
+                </div>
+
+                <!-- Password -->
+                <div class="input-group">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+                    <div class="password-requirements register-only" id="passwordReqs">
+                        <div class="req" id="reqLength">
+                            <span class="req-icon">○</span> At least 6 characters
+                        </div>
+                        <div class="req" id="reqSpecial">
+                            <span class="req-icon">○</span> At least 1 special character (!@#$%^&*)
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="submitBtn">
+                    <span class="btn-text" id="btnText">Sign In</span>
+                    <span class="spinner"></span>
+                </button>
+            </form>
+
+            <div class="toggle-form">
+                <span id="toggleText">Don't have an account?</span>
+                <a id="toggleLink" onclick="toggleMode()">Create one</a>
+            </div>
+
+            <div style="text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(46, 51, 71, 0.6); display: flex; justify-content: center; gap: 24px;">
+                <a href="staff-login.html" style="color: var(--text-secondary); font-size: 0.82rem; transition: color 0.2s;">
+                    Staff? <span style="color: #60a5fa; font-weight: 600;">Login →</span>
+                </a>
+                <a href="trainer-login.html" style="color: var(--text-secondary); font-size: 0.82rem; transition: color 0.2s;">
+                    Trainer? <span style="color: #4ade80; font-weight: 600;">Login →</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        let isRegisterMode = false;
+
+        if (localStorage.getItem('gym_user')) {
+            window.location.href = 'index.html';
+        }
+
+        const form = document.getElementById('authForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const errorText = document.getElementById('errorText');
+        const successMsg = document.getElementById('successMsg');
+        const successText = document.getElementById('successText');
+        const formTitle = document.getElementById('formTitle');
+        const btnText = document.getElementById('btnText');
+        const submitBtn = document.getElementById('submitBtn');
+        const toggleText = document.getElementById('toggleText');
+        const toggleLink = document.getElementById('toggleLink');
+        const emailGroup = document.getElementById('emailGroup');
+        const passwordInput = document.getElementById('password');
+
+        // Live password validation
+        passwordInput.addEventListener('input', () => {
+            const val = passwordInput.value;
+            const reqLength = document.getElementById('reqLength');
+            const reqSpecial = document.getElementById('reqSpecial');
+
+            if (val.length >= 6) {
+                reqLength.classList.add('met');
+                reqLength.querySelector('.req-icon').textContent = '✓';
+            } else {
+                reqLength.classList.remove('met');
+                reqLength.querySelector('.req-icon').textContent = '○';
+            }
+
+            const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/;
+            if (specialCharRegex.test(val)) {
+                reqSpecial.classList.add('met');
+                reqSpecial.querySelector('.req-icon').textContent = '✓';
+            } else {
+                reqSpecial.classList.remove('met');
+                reqSpecial.querySelector('.req-icon').textContent = '○';
+            }
+        });
+
+        function toggleMode() {
+            isRegisterMode = !isRegisterMode;
+            hideMessages();
+
+            if (isRegisterMode) {
+                formTitle.textContent = 'Create Admin Account';
+                btnText.textContent = 'Register';
+                toggleText.textContent = 'Already have an account?';
+                toggleLink.textContent = 'Sign in';
+                emailGroup.classList.add('show');
+                document.getElementById('passwordReqs').classList.add('show');
+            } else {
+                formTitle.textContent = 'Admin Sign In';
+                btnText.textContent = 'Sign In';
+                toggleText.textContent = "Don't have an account?";
+                toggleLink.textContent = 'Create one';
+                emailGroup.classList.remove('show');
+                document.getElementById('passwordReqs').classList.remove('show');
+            }
+        }
+
+        function showError(msg) {
+            successMsg.classList.remove('show');
+            errorText.textContent = msg;
+            errorMsg.classList.add('show');
+        }
+
+        function showSuccess(msg) {
+            errorMsg.classList.remove('show');
+            successText.textContent = msg;
+            successMsg.classList.add('show');
+        }
+
+        function hideMessages() {
+            errorMsg.classList.remove('show');
+            successMsg.classList.remove('show');
+        }
+
+        function setLoading(loading) {
+            submitBtn.disabled = loading;
+            submitBtn.classList.toggle('loading', loading);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessages();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showError('Please enter username and password');
+                return;
+            }
+
+            if (isRegisterMode) {
+                // Client-side password validation
+                if (password.length < 6) {
+                    showError('Password must be at least 6 characters long');
+                    return;
+                }
+                const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/;
+                if (!specialCharRegex.test(password)) {
+                    showError('Password must contain at least one special character');
+                    return;
+                }
+            }
+
+            setLoading(true);
+
+            try {
+                const endpoint = isRegisterMode ? '/auth/register' : '/auth/login';
+                const email = document.getElementById('email').value.trim();
+                const body = isRegisterMode
+                    ? { username, password, email: email || undefined }
+                    : { username, password };
+
+                const res = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError(data.error || 'Something went wrong');
+                    setLoading(false);
+                    return;
+                }
+
+                if (isRegisterMode) {
+                    showSuccess('Account created! Signing you in...');
+                    setTimeout(() => {
+                        localStorage.setItem('gym_user', JSON.stringify(data.user));
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    localStorage.setItem('gym_user', JSON.stringify(data.user));
+                    window.location.href = 'index.html';
+                }
+            } catch (err) {
+                showError('Cannot connect to server. Ensure backend is running.');
+                setLoading(false);
+            }
+        });
+    </script>
+
+</body>
+</html>

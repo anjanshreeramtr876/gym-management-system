@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Record or edit a gym payment">
+    <title>Add Payment | Gym Management System</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏋️</div>
+            <h2>GymPro<small>Management System</small></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Main</div>
+            <a href="index.html" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+            <div class="nav-section-title">Members</div>
+            <a href="add-member.html" class="nav-link"><span class="icon">➕</span> Add Member</a>
+            <a href="view-members.html" class="nav-link"><span class="icon">👥</span> View Members</a>
+            <div class="nav-section-title">Trainers</div>
+            <a href="add-trainer.html" class="nav-link"><span class="icon">➕</span> Add Trainer</a>
+            <a href="view-trainers.html" class="nav-link"><span class="icon">🏅</span> View Trainers</a>
+            <div class="nav-section-title">Payments</div>
+            <a href="add-payment.html" class="nav-link"><span class="icon">💳</span> Add Payment</a>
+            <a href="payment-history.html" class="nav-link"><span class="icon">📋</span> Payment History</a>
+
+            <div class="nav-section-title">Staff & Operations</div>
+            <a href="manage-staff.html" class="nav-link"><span class="icon">👨‍💼</span> Manage Staff</a>
+            <a href="expenditure.html" class="nav-link"><span class="icon">💰</span> Expenditure</a>
+            <a href="admin-reports.html" class="nav-link"><span class="icon">📢</span> Issue Reports</a>
+
+            <div class="nav-section-title">Account</div>
+            <a href="#" class="nav-link" onclick="logout(); return false;"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 id="pageTitle">Record Payment</h1>
+                <p>Enter payment details for a gym member.</p>
+            </div>
+            <a href="payment-history.html" class="btn btn-secondary">← Back to Payments</a>
+        </div>
+
+        <div class="panel">
+            <div class="panel-body">
+                <form id="paymentForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="Member_ID">Member *</label>
+                        <select id="Member_ID" name="Member_ID" required>
+                            <option value="">Select Member</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="Amount">Amount (₹) *</label>
+                        <input type="number" id="Amount" name="Amount" min="1" step="0.01" required placeholder="e.g. 2000">
+                    </div>
+                    <div class="form-group">
+                        <label for="Payment_Date">Payment Date</label>
+                        <input type="date" id="Payment_Date" name="Payment_Date">
+                    </div>
+                    <div class="form-group">
+                        <label for="Payment_Method">Payment Method</label>
+                        <select id="Payment_Method" name="Payment_Method">
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Online">Online</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="Membership_Type">Membership Type</label>
+                        <select id="Membership_Type" name="Membership_Type">
+                            <option value="Monthly">Monthly</option>
+                            <option value="Quarterly">Quarterly</option>
+                            <option value="Half-Yearly">Half-Yearly</option>
+                            <option value="Yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">💳 Record Payment</button>
+                        <a href="payment-history.html" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script>
+        const editId = getQueryParam('id');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load members for dropdown
+            try {
+                const members = await apiGet('/members');
+                const select = document.getElementById('Member_ID');
+                members.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.Member_ID;
+                    opt.textContent = `${m.Name} (ID: ${m.Member_ID})`;
+                    select.appendChild(opt);
+                });
+            } catch (err) { console.error(err); }
+
+            // Default payment date to today
+            document.getElementById('Payment_Date').value = new Date().toISOString().split('T')[0];
+
+            // If editing, load existing data
+            if (editId) {
+                document.getElementById('pageTitle').textContent = 'Edit Payment';
+                document.getElementById('submitBtn').textContent = '💾 Update Payment';
+                try {
+                    const payment = await apiGet(`/payments/${editId}`);
+                    document.getElementById('Member_ID').value = payment.Member_ID || '';
+                    document.getElementById('Amount').value = payment.Amount || '';
+                    document.getElementById('Payment_Date').value = payment.Payment_Date ? payment.Payment_Date.split('T')[0] : '';
+                    document.getElementById('Payment_Method').value = payment.Payment_Method || 'Cash';
+                    document.getElementById('Membership_Type').value = payment.Membership_Type || 'Monthly';
+                } catch (err) {
+                    showToast('Failed to load payment data', 'error');
+                }
+            }
+        });
+
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                Member_ID: document.getElementById('Member_ID').value,
+                Amount: document.getElementById('Amount').value,
+                Payment_Date: document.getElementById('Payment_Date').value || null,
+                Payment_Method: document.getElementById('Payment_Method').value,
+                Membership_Type: document.getElementById('Membership_Type').value
+            };
+
+            try {
+                if (editId) {
+                    await apiPut(`/payments/${editId}`, data);
+                    showToast('Payment updated successfully!');
+                } else {
+                    await apiPost('/payments', data);
+                    showToast('Payment recorded successfully!');
+                }
+                setTimeout(() => window.location.href = 'payment-history.html', 1000);
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

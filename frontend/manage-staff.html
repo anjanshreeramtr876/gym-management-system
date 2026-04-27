@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manage Staff Members - GymPro Admin">
+    <title>Manage Staff | GymPro</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .access-key-display {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: 'Courier New', monospace;
+            font-weight: 700; font-size: 0.85rem;
+            background: rgba(249, 115, 22, 0.1);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 6px;
+            letter-spacing: 1.5px;
+        }
+        .key-copy-btn {
+            background: none; border: none; cursor: pointer;
+            font-size: 0.9rem; padding: 2px 4px;
+            transition: transform 0.2s;
+        }
+        .key-copy-btn:hover { transform: scale(1.2); }
+
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 100%; max-width: 520px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+            animation: modalEntry 0.3s ease-out;
+        }
+        @keyframes modalEntry {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px; border-bottom: 1px solid var(--border);
+        }
+        .modal-header h3 { font-size: 1.05rem; font-weight: 600; }
+        .modal-close {
+            background: none; border: none; color: var(--text-secondary);
+            font-size: 1.3rem; cursor: pointer; padding: 4px;
+            transition: color 0.2s;
+        }
+        .modal-close:hover { color: var(--text-primary); }
+        .modal-body { padding: 24px; }
+
+        /* New staff key reveal */
+        .key-reveal {
+            text-align: center;
+            padding: 24px;
+            background: rgba(34, 197, 94, 0.06);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+        }
+        .key-reveal .key-value {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem; font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 3px;
+            margin: 12px 0;
+            padding: 12px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px dashed var(--accent);
+        }
+        .key-reveal p { font-size: 0.82rem; color: var(--text-secondary); margin-top: 8px; }
+
+        .status-active {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 600;
+            background: rgba(34, 197, 94, 0.12); color: #4ade80;
+        }
+        .status-inactive {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 600;
+            background: rgba(239, 68, 68, 0.12); color: #f87171;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏋️</div>
+            <h2>GymPro<small>Management System</small></h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Main</div>
+            <a href="index.html" class="nav-link"><span class="icon">📊</span> Dashboard</a>
+
+            <div class="nav-section-title">Members</div>
+            <a href="add-member.html" class="nav-link"><span class="icon">➕</span> Add Member</a>
+            <a href="view-members.html" class="nav-link"><span class="icon">👥</span> View Members</a>
+
+            <div class="nav-section-title">Trainers</div>
+            <a href="add-trainer.html" class="nav-link"><span class="icon">➕</span> Add Trainer</a>
+            <a href="view-trainers.html" class="nav-link"><span class="icon">🏅</span> View Trainers</a>
+
+            <div class="nav-section-title">Payments</div>
+            <a href="add-payment.html" class="nav-link"><span class="icon">💳</span> Add Payment</a>
+            <a href="payment-history.html" class="nav-link"><span class="icon">📋</span> Payment History</a>
+
+            <div class="nav-section-title">Staff & Operations</div>
+            <a href="manage-staff.html" class="nav-link active"><span class="icon">👨‍💼</span> Manage Staff</a>
+            <a href="expenditure.html" class="nav-link"><span class="icon">💰</span> Expenditure</a>
+            <a href="admin-reports.html" class="nav-link"><span class="icon">📢</span> Issue Reports</a>
+
+            <div class="nav-section-title">Account</div>
+            <a href="#" class="nav-link" onclick="logout(); return false;"><span class="icon">🚪</span> Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Manage Staff</h1>
+                <p>Add and manage staff members with unique access keys</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddModal()">➕ Add Staff</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">👨‍💼</div>
+                <div class="stat-value" id="totalStaff">—</div>
+                <div class="stat-label">Total Staff</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div class="stat-value" id="activeStaff">—</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red">🚫</div>
+                <div class="stat-value" id="inactiveStaff">—</div>
+                <div class="stat-label">Inactive</div>
+            </div>
+        </div>
+
+        <!-- Staff Table -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Staff Members</h2>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Access Key</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffTableBody">
+                        <tr><td colspan="8" class="empty-state"><p>Loading...</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Staff Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>➕ Add New Staff Member</h3>
+                <button class="modal-close" onclick="closeAddModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="keyRevealSection" style="display: none;">
+                    <div class="key-reveal">
+                        <div style="font-size: 2rem;">🔑</div>
+                        <div>Staff Access Key:</div>
+                        <div class="key-value" id="newKeyValue"></div>
+                        <p>⚠️ Share this key with the staff member. They will use it to log in.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="copyNewKey()" style="width: 100%; margin-bottom: 8px;">📋 Copy Key</button>
+                    <button class="btn btn-secondary" onclick="closeAddModal()" style="width: 100%;">Done</button>
+                </div>
+                <form id="addStaffForm" class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="staffName">Full Name *</label>
+                        <input type="text" id="staffName" placeholder="Enter staff name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="staffEmail">Email</label>
+                        <input type="email" id="staffEmail" placeholder="Email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="staffPhone">Phone</label>
+                        <input type="text" id="staffPhone" placeholder="Phone number">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">🔑 Add & Generate Key</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        const staffAPI = `${API_BASE}/staff`;
+
+        async function loadStaff() {
+            try {
+                const res = await fetch(staffAPI);
+                const staff = await res.json();
+
+                const active = staff.filter(s => s.Is_Active).length;
+                document.getElementById('totalStaff').textContent = staff.length;
+                document.getElementById('activeStaff').textContent = active;
+                document.getElementById('inactiveStaff').textContent = staff.length - active;
+
+                const tbody = document.getElementById('staffTableBody');
+                if (staff.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">👨‍💼</div><p>No staff members yet. <a href="#" onclick="openAddModal(); return false;">Add your first staff member</a></p></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = staff.map(s => `
+                    <tr>
+                        <td>${s.Staff_ID}</td>
+                        <td><strong>${escapeHtml(s.Staff_Name)}</strong></td>
+                        <td>${s.Email || '—'}</td>
+                        <td>${s.Phone || '—'}</td>
+                        <td>
+                            <span class="access-key-display">
+                                ${s.Access_Key}
+                                <button class="key-copy-btn" onclick="copyKey('${s.Access_Key}')" title="Copy key">📋</button>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="${s.Is_Active ? 'status-active' : 'status-inactive'}">
+                                ${s.Is_Active ? '● Active' : '● Inactive'}
+                            </span>
+                        </td>
+                        <td>${formatDate(s.Created_At)}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm ${s.Is_Active ? 'btn-delete' : 'btn-edit'}" onclick="toggleStatus(${s.Staff_ID}, ${s.Is_Active ? 0 : 1}, '${escapeHtml(s.Staff_Name)}', '${s.Email || ''}', '${s.Phone || ''}')">
+                                    ${s.Is_Active ? '🚫' : '✅'}
+                                </button>
+                                <button class="btn btn-sm btn-edit" onclick="regenerateKey(${s.Staff_ID})" title="Regenerate key">🔄</button>
+                                <button class="btn btn-sm btn-delete" onclick="deleteStaff(${s.Staff_ID}, '${escapeHtml(s.Staff_Name)}')" title="Delete">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Load error:', err);
+                document.getElementById('staffTableBody').innerHTML =
+                    '<tr><td colspan="8" class="empty-state"><p>Could not load staff. Check server.</p></td></tr>';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('show');
+            document.getElementById('addStaffForm').style.display = '';
+            document.getElementById('keyRevealSection').style.display = 'none';
+            document.getElementById('addStaffForm').reset();
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('show');
+            loadStaff();
+        }
+
+        // Add staff
+        document.getElementById('addStaffForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('staffName').value.trim();
+            const email = document.getElementById('staffEmail').value.trim();
+            const phone = document.getElementById('staffPhone').value.trim();
+
+            try {
+                const res = await fetch(staffAPI, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Staff_Name: name, Email: email, Phone: phone })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showToast(data.error || 'Failed to add staff', 'error');
+                    return;
+                }
+
+                // Show the generated key
+                document.getElementById('addStaffForm').style.display = 'none';
+                document.getElementById('keyRevealSection').style.display = 'block';
+                document.getElementById('newKeyValue').textContent = data.access_key;
+
+                showToast('Staff member added successfully!', 'success');
+                loadStaff();
+            } catch (err) {
+                showToast('Server error. Try again.', 'error');
+            }
+        });
+
+        function copyKey(key) {
+            navigator.clipboard.writeText(key).then(() => {
+                showToast('Access key copied to clipboard!', 'success');
+            });
+        }
+
+        function copyNewKey() {
+            const key = document.getElementById('newKeyValue').textContent;
+            navigator.clipboard.writeText(key).then(() => {
+                showToast('Key copied!', 'success');
+            });
+        }
+
+        async function toggleStatus(id, newStatus, name, email, phone) {
+            try {
+                const res = await fetch(`${staffAPI}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Staff_Name: name, Email: email, Phone: phone, Is_Active: newStatus })
+                });
+                if (res.ok) {
+                    showToast(`Staff ${newStatus ? 'activated' : 'deactivated'}`, 'success');
+                    loadStaff();
+                }
+            } catch (err) {
+                showToast('Failed to update status', 'error');
+            }
+        }
+
+        async function regenerateKey(id) {
+            if (!confirm('Are you sure? The old key will stop working immediately.')) return;
+            try {
+                const res = await fetch(`${staffAPI}/${id}/regenerate-key`, { method: 'PUT' });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`New key: ${data.access_key}`, 'success');
+                    loadStaff();
+                }
+            } catch (err) {
+                showToast('Failed to regenerate key', 'error');
+            }
+        }
+
+        async function deleteStaff(id, name) {
+            if (!confirmDelete(name)) return;
+            try {
+                const res = await fetch(`${staffAPI}/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast('Staff member deleted', 'success');
+                    loadStaff();
+                }
+            } catch (err) {
+                showToast('Delete failed', 'error');
+            }
+        }
+
+        // Init
+        loadStaff();
+    </script>
+</body>
+</html>
