@@ -3,27 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Manage Staff Members - GymPro Admin">
+    <meta name="description" content="Manage Staff Members - GymPro">
     <title>Manage Staff | GymPro</title>
     <link rel="stylesheet" href="css/styles.css">
     <style>
-        .access-key-display {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-family: 'Courier New', monospace;
-            font-weight: 700; font-size: 0.85rem;
-            background: rgba(249, 115, 22, 0.1);
-            color: var(--accent);
-            padding: 4px 12px;
-            border-radius: 6px;
-            letter-spacing: 1.5px;
-        }
-        .key-copy-btn {
-            background: none; border: none; cursor: pointer;
-            font-size: 0.9rem; padding: 2px 4px;
-            transition: transform 0.2s;
-        }
-        .key-copy-btn:hover { transform: scale(1.2); }
-
         .modal-overlay {
             position: fixed; inset: 0; z-index: 1000;
             background: rgba(0, 0, 0, 0.6);
@@ -57,28 +40,6 @@
         }
         .modal-close:hover { color: var(--text-primary); }
         .modal-body { padding: 24px; }
-
-        /* New staff key reveal */
-        .key-reveal {
-            text-align: center;
-            padding: 24px;
-            background: rgba(34, 197, 94, 0.06);
-            border: 1px solid rgba(34, 197, 94, 0.15);
-            border-radius: var(--radius-sm);
-            margin-bottom: 16px;
-        }
-        .key-reveal .key-value {
-            font-family: 'Courier New', monospace;
-            font-size: 1.5rem; font-weight: 700;
-            color: var(--accent);
-            letter-spacing: 3px;
-            margin: 12px 0;
-            padding: 12px;
-            background: var(--bg-input);
-            border-radius: var(--radius-sm);
-            border: 1px dashed var(--accent);
-        }
-        .key-reveal p { font-size: 0.82rem; color: var(--text-secondary); margin-top: 8px; }
 
         .status-active {
             display: inline-flex; align-items: center; gap: 4px;
@@ -133,7 +94,7 @@
         <div class="page-header">
             <div>
                 <h1>Manage Staff</h1>
-                <p>Add and manage staff members with unique access keys</p>
+                <p>Add and manage staff members</p>
             </div>
             <button class="btn btn-primary" onclick="openAddModal()">➕ Add Staff</button>
         </div>
@@ -170,14 +131,13 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Phone</th>
-                            <th>Access Key</th>
                             <th>Status</th>
                             <th>Joined</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="staffTableBody">
-                        <tr><td colspan="8" class="empty-state"><p>Loading...</p></td></tr>
+                        <tr><td colspan="7" class="empty-state"><p>Loading...</p></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -192,16 +152,6 @@
                 <button class="modal-close" onclick="closeAddModal()">✕</button>
             </div>
             <div class="modal-body">
-                <div id="keyRevealSection" style="display: none;">
-                    <div class="key-reveal">
-                        <div style="font-size: 2rem;">🔑</div>
-                        <div>Staff Access Key:</div>
-                        <div class="key-value" id="newKeyValue"></div>
-                        <p>⚠️ Share this key with the staff member. They will use it to log in.</p>
-                    </div>
-                    <button class="btn btn-primary" onclick="copyNewKey()" style="width: 100%; margin-bottom: 8px;">📋 Copy Key</button>
-                    <button class="btn btn-secondary" onclick="closeAddModal()" style="width: 100%;">Done</button>
-                </div>
                 <form id="addStaffForm" class="form-grid">
                     <div class="form-group full-width">
                         <label for="staffName">Full Name *</label>
@@ -216,7 +166,7 @@
                         <input type="text" id="staffPhone" placeholder="Phone number">
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">🔑 Add & Generate Key</button>
+                        <button type="submit" class="btn btn-primary">➕ Add Staff</button>
                         <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
                     </div>
                 </form>
@@ -240,7 +190,7 @@
 
                 const tbody = document.getElementById('staffTableBody');
                 if (staff.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">👨‍💼</div><p>No staff members yet. <a href="#" onclick="openAddModal(); return false;">Add your first staff member</a></p></td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">👨‍💼</div><p>No staff members yet. <a href="#" onclick="openAddModal(); return false;">Add your first staff member</a></p></td></tr>';
                     return;
                 }
 
@@ -250,12 +200,6 @@
                         <td><strong>${escapeHtml(s.Staff_Name)}</strong></td>
                         <td>${s.Email || '—'}</td>
                         <td>${s.Phone || '—'}</td>
-                        <td>
-                            <span class="access-key-display">
-                                ${s.Access_Key}
-                                <button class="key-copy-btn" onclick="copyKey('${s.Access_Key}')" title="Copy key">📋</button>
-                            </span>
-                        </td>
                         <td>
                             <span class="${s.Is_Active ? 'status-active' : 'status-inactive'}">
                                 ${s.Is_Active ? '● Active' : '● Inactive'}
@@ -267,7 +211,6 @@
                                 <button class="btn btn-sm ${s.Is_Active ? 'btn-delete' : 'btn-edit'}" onclick="toggleStatus(${s.Staff_ID}, ${s.Is_Active ? 0 : 1}, '${escapeHtml(s.Staff_Name)}', '${s.Email || ''}', '${s.Phone || ''}')">
                                     ${s.Is_Active ? '🚫' : '✅'}
                                 </button>
-                                <button class="btn btn-sm btn-edit" onclick="regenerateKey(${s.Staff_ID})" title="Regenerate key">🔄</button>
                                 <button class="btn btn-sm btn-delete" onclick="deleteStaff(${s.Staff_ID}, '${escapeHtml(s.Staff_Name)}')" title="Delete">🗑️</button>
                             </div>
                         </td>
@@ -276,7 +219,7 @@
             } catch (err) {
                 console.error('Load error:', err);
                 document.getElementById('staffTableBody').innerHTML =
-                    '<tr><td colspan="8" class="empty-state"><p>Could not load staff. Check server.</p></td></tr>';
+                    '<tr><td colspan="7" class="empty-state"><p>Could not load staff. Check server.</p></td></tr>';
             }
         }
 
@@ -289,8 +232,6 @@
 
         function openAddModal() {
             document.getElementById('addModal').classList.add('show');
-            document.getElementById('addStaffForm').style.display = '';
-            document.getElementById('keyRevealSection').style.display = 'none';
             document.getElementById('addStaffForm').reset();
         }
 
@@ -319,30 +260,12 @@
                     return;
                 }
 
-                // Show the generated key
-                document.getElementById('addStaffForm').style.display = 'none';
-                document.getElementById('keyRevealSection').style.display = 'block';
-                document.getElementById('newKeyValue').textContent = data.access_key;
-
                 showToast('Staff member added successfully!', 'success');
-                loadStaff();
+                closeAddModal();
             } catch (err) {
                 showToast('Server error. Try again.', 'error');
             }
         });
-
-        function copyKey(key) {
-            navigator.clipboard.writeText(key).then(() => {
-                showToast('Access key copied to clipboard!', 'success');
-            });
-        }
-
-        function copyNewKey() {
-            const key = document.getElementById('newKeyValue').textContent;
-            navigator.clipboard.writeText(key).then(() => {
-                showToast('Key copied!', 'success');
-            });
-        }
 
         async function toggleStatus(id, newStatus, name, email, phone) {
             try {
@@ -357,20 +280,6 @@
                 }
             } catch (err) {
                 showToast('Failed to update status', 'error');
-            }
-        }
-
-        async function regenerateKey(id) {
-            if (!confirm('Are you sure? The old key will stop working immediately.')) return;
-            try {
-                const res = await fetch(`${staffAPI}/${id}/regenerate-key`, { method: 'PUT' });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(`New key: ${data.access_key}`, 'success');
-                    loadStaff();
-                }
-            } catch (err) {
-                showToast('Failed to regenerate key', 'error');
             }
         }
 

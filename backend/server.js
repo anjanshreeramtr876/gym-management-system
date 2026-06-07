@@ -46,9 +46,7 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
     console.log(`\n🏋️  Gym Management System API`);
     console.log(`   Server running on http://localhost:${PORT}`);
-    console.log(`   Admin Login:     http://localhost:${PORT}/login.html`);
-    console.log(`   Staff Login:     http://localhost:${PORT}/staff-login.html`);
-    console.log(`   Trainer Login:   http://localhost:${PORT}/trainer-login.html`);
-    console.log(`   Admin Dashboard: http://localhost:${PORT}/index.html`);
-    console.log(`   API Base:        http://localhost:${PORT}/api\n`);
+    console.log(`   Login:     http://localhost:${PORT}/login.html`);
+    console.log(`   Dashboard: http://localhost:${PORT}/index.html`);
+    console.log(`   API Base:  http://localhost:${PORT}/api\n`);
 });

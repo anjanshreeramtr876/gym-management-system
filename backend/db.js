@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
@@ -8,8 +9,12 @@ const pool = mysql.createPool({
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'gym_management',
     waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+    connectionLimit: 5,
+    queueLimit: 0,
+    // Enable SSL for cloud databases (required by Aiven, PlanetScale, Railway, etc.)
+    ssl: process.env.DB_HOST && process.env.DB_HOST !== 'localhost'
+        ? { rejectUnauthorized: true }
+        : undefined
 });
 
 module.exports = pool;

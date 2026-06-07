@@ -336,10 +336,10 @@
 
         // Auth guard for staff
         function getStaffUser() {
-            try { return JSON.parse(localStorage.getItem('gym_staff')); } catch { return null; }
+            try { return JSON.parse(localStorage.getItem('gym_user')); } catch { return null; }
         }
         const staffUser = getStaffUser();
-        if (!staffUser) { window.location.href = 'staff-login.html'; }
+        if (!staffUser) { window.location.href = 'login.html'; }
 
         // Display staff name
         document.getElementById('staffNameDisplay').textContent = staffUser ? staffUser.name : 'Staff';
@@ -348,8 +348,8 @@
         let selectedPriority = 'medium';
 
         function staffLogout() {
-            localStorage.removeItem('gym_staff');
-            window.location.href = 'staff-login.html';
+            localStorage.removeItem('gym_user');
+            window.location.href = 'login.html';
         }
 
         // Tab switching
